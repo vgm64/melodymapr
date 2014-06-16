@@ -1,16 +1,31 @@
 {% extends "layout/base.html" %}
 
+<!-- Adding the following to allow scrolling? -->
+{% block head %}
+<style>
+body {
+  overflow-y: auto;
+}
+#top {
+  margin-top: 60px;
+}
+</style>
+{% endblock %}
+
 {% block content %}
   <div id="wrap">
     <h1> MelodyMapr</h1>
     <h2> More signal, more tunes.</h2>
 
     <form action="/out" method="GET">
-      Longitude: <input type="text" name="userlon"><br>
-      Latitude: <input type="text" name="userlat"><p>
+      Origin: <input type="text" name="origin"><br>
+      Destination: <input type="text" name="destination"><p>
       <input type="submit">
     </form>
 
+  <p>
+  <a href="http://localhost:5000/out?origin=Davis+CA&destination=San+Francisco+CA&genre=Alt%">Davis to SF, Alternative</a>
+  <hr>
   <p>
   <a href="http://localhost:5000/out?userlon=-122.33&userlat=37.82&genre=Alt%">SF, Alternative</a>
   <p>
