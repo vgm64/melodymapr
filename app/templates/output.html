@@ -1,11 +1,77 @@
 {% extends "layout/base.html" %}
 
+<!-- Adding the following to allow scrolling? -->
+{% block head %}
+<style>
+body {
+  overflow-y: auto;
+}
+#top {
+  margin-top: 60px;
+}
+</style>
+{% endblock %}
 {% block content %}
   <div id="wrap">
     <h1> MelodyMapr - More signal, more tunes.</h1>
 
   <p>
-  {{settings['fig_html']|safe}}
+  <!--{{settings['fig_html']|safe}}-->
+  
+  <center>
+  <!--<iframe-->
+    <!--width="600"-->
+    <!--height="450"-->
+    <!--frameborder="0" style="border:0"-->
+    <!--src="https://www.google.com/maps/embed/v1/directions?key=AIzaSyD8KpNTcqcPO0sTepyUDn2Uc2DO33052ig&origin={{settings['origin']|safe}}&destination={{settings['destination']|safe}}">-->
+  <!--</iframe>-->
+
+
+  <!--src="https://www.google.com/maps/embed/v1/view?key=AIzaSyD8KpNTcqcPO0sTepyUDn2Uc2DO33052ig&center={{settings['userlat']}},{{settings['userlon'] | safe}}">-->
+    <!--&q=Space+Needle,Seattle+WA">-->
+    <!--src="https://www.google.com/maps/embed/v1/place?key=AIzaSyD8KpNTcqcPO0sTepyUDn2Uc2DO33052ig&q={{settings['userlon']}},{{settings['userlat'] | safe}}">-->
+  </center>
+  <p>
+  <hr>
+  <p>
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD8KpNTcqcPO0sTepyUDn2Uc2DO33052ig"> </script>
+
+
+
+<div id="map-canvas" style="width: 500px; height: 400px"></div>
+<script type="text/javascript">
+///////////////////////////////////////////////////////////////////////////////////
+////          Javascript for drawing polylines!          //////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
+function initialize() {
+  var mapDiv = document.getElementById('map-canvas');
+  var map = new google.maps.Map(mapDiv, {
+    center: new google.maps.LatLng(0, -180),
+    zoom: 2,
+    mapTypeId: google.maps.MapTypeId.ROADMAP
+  });
+  {{settings['legs']|safe}}
+  //var path = [new google.maps.LatLng(37.772323, -122.214897),
+  //  new google.maps.LatLng(21.291982, -157.821856),
+  //  new google.maps.LatLng(-18.142599, 178.431),
+  //  new google.maps.LatLng(-27.46758, 153.027892)];
+  //var path = [{{settings['test_js']}}];
+
+  //var line = new google.maps.Polyline({
+  //  path: path,
+  //  strokeColor: '#ff0000',
+  //  strokeOpacity: 1.0,
+  //  strokeWeight: 2
+  //});
+
+  //line.setMap(map);
+}
+google.maps.event.addDomListener(window, 'load', initialize);
+///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
+</script>
+  
+  
   </div>
 {% endblock %}
 
