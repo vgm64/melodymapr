@@ -2,7 +2,7 @@ import socket
 import os
 
 def get_API_key():
-  return os.environ.get('API_KEY') or generate_API_key()
+  return os.environ.get('GOOGLE_API_KEY') or raw_input("Enter API key: ")
 
 def generate_salted_API_key():
   """ This generates the key that is decoded in generate_API_key"""
