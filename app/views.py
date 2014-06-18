@@ -2,7 +2,10 @@ from flask import render_template, request
 from app import app, host, port, user, passwd, db
 from app.helpers.database import con_db, query_db, find_radio_stations
 from app.helpers.graphics import render_webfigure
-from app.helpers.maps import get_directions, get_route_from_directions, leg_to_js
+from app.helpers.maps import get_directions, get_route_from_directions
+from app.helpers.maps import leg_to_js, consolidate_tunes, render_legs, get_bounding_box
+from app.helpers.maps import render_contours
+from app.helpers.misc import Timer
 import matplotlib.pyplot as plt
 
 
@@ -21,6 +24,7 @@ def index():
 @app.route('/out')
 def out():
   # WORK!!
+  timer = Timer()
   # Create database connection
   con = con_db(host, port, user, passwd, db)
 
@@ -31,29 +35,135 @@ def out():
   }
   # Get google directions.
   directions = get_directions(var_dict['origin'], var_dict['destination'])
+  timer('Finished directions JSON call')
+  #import json
+  #print json.dumps(directions)
+  bbox = get_bounding_box(directions)
+  var_dict['bbox'] = bbox
+
   route = get_route_from_directions(directions)
+  timer('Finished getting route from directions')
+  print "--> Route has %d nodes" % len(route)
   var_dict['route'] = route
 
   # HEAVY LIFTING: Split the route into radio stations
-  results = find_radio_stations(con, route, var_dict)
-
-  #legs = leg_to_js(route, {})
-  #var_dict['legs'] = legs
-  #print legs
+  route_tunes = find_radio_stations(con, route, var_dict)
+  timer('Finished db query to find antennas')
+  print "--> %d nodes don't seem to have a station" % (len([i for i in route_tunes if i is None]))
 
 
-  # Query the database
-  data = query_db(con, var_dict)
+  # Create colored legs for the route.
+  grouped_nodes = consolidate_tunes(route, route_tunes)
+  timer('Finished consolidation of towers')
 
-  # Add the results of the query.
-  var_dict['data'] = data
+  # Great. Make the nodes available.
+  javascript_legs = render_legs(grouped_nodes)
+  var_dict['route_js'] = javascript_legs
+  timer('Finished creating js')
+  
+  # Add contours to the map
+  javascript_contours = render_contours(grouped_nodes)
+  var_dict['contour_js'] = javascript_contours
 
-  # Make the plot.
-  #fig_html = render_webfigure(var_dict)
-  #var_dict['fig_html'] = fig_html
+  # Close db connection.
+  con.close()
 
   # Render the template w/ user input, query result, and figure included!
   return render_template('output.html', settings=var_dict)
+
+@app.route('/contour')
+def show_contour():
+  # Just show a contour.
+  con = con_db(host, port, user, passwd, db)
+  cur = con.cursor()
+
+  var_dict = {
+    "scs": request.args.get("scs", 'KGMZ'),
+  }
+
+  base_query = """
+  SELECT b.antlon, b.antlat, b.scs, map.cat, b.lons, b.lats
+  FROM contours b
+  JOIN contour_cat_map map
+  ON b.id = map.contour_id
+  WHERE 
+  b.scs = '{0}' """
+  query = base_query.format( var_dict['scs'])
+
+  cur.execute(query)
+
+  route_results = []
+
+  raw_results = cur.fetchall()
+
+  import numpy as np
+  if len(raw_results) == 0:
+    return None
+  results = zip(*raw_results)
+  antlons = np.array(results[0], dtype=float)
+  antlats = np.array(results[1], dtype=float)
+  scss = np.array(results[2])
+  cats = np.array(results[3])
+  contour_lons = [np.fromstring(i, sep=',') for i in results[4]]
+  contour_lats = [np.fromstring(i, sep=',') for i in results[5]]  
+  contours = zip(contour_lons, contour_lats)
+
+  print contours[0]
+  
+  var_dict['scss'] = scss
+  var_dict['contours'] = contours
+
+  def good_contour_to_js(lats, lons, scs):
+    list_of_LatLngs = []
+    for i in xrange(len(lats)):
+      list_of_LatLngs.append('new google.maps.LatLng(%f, %f)'%(lats[i], lons[i]))
+    LatLngs = ','.join(list_of_LatLngs)
+    js = """
+    var paths = [{0}];
+    var shape = new google.maps.Polygon({{
+      paths: paths,
+      strokeColor: '#ff0000',
+      strokeOpacity: 0.8,
+      strokeWeight: 2,
+      fillColor: '#ff0000',
+      fillOpacity: 0.15
+    }});
+    shape.setMap(map);
+    var marker = new google.maps.Marker({{
+        position: paths[0],
+        map: map,
+        title: '{1}'
+    }});
+    var infoWindow = new google.maps.InfoWindow();
+    google.maps.event.addListener(marker, 'click', (function(marker) {{
+      return function() {{
+        infoWindow.setContent('{2}');
+        infoWindow.open(map, marker);
+      }}
+    }})(marker));
+    
+    """.format( LatLngs, scs, get_wiki_table(scs))
+    return js
+
+  def get_wiki_table(page):
+    import urllib2
+    from bs4 import BeautifulSoup
+    url = 'http://en.wikipedia.org/wiki/'+page
+    bs = BeautifulSoup(urllib2.urlopen(url).read())
+    table = bs.find('table', attrs={'class':'infobox vcard'})
+    return str(table).decode("ascii", "ignore").replace("\n", "").replace("'", "\\'")
+
+  js = []
+  for i in xrange(len(contour_lons)):
+    js.append( good_contour_to_js(contour_lats[i], contour_lons[i], scss[i]))
+
+  var_dict['js'] = "\n".join(js)
+
+  
+  #print len(contours)
+
+  return render_template('contour.html', settings = var_dict)
+
 
 @app.route('/home')
 def home():

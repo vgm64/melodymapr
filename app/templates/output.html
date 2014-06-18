@@ -13,7 +13,6 @@ body {
 {% endblock %}
 {% block content %}
   <div id="wrap">
-    <h1> MelodyMapr - More signal, more tunes.</h1>
 
   <p>
   <!--{{settings['fig_html']|safe}}-->
@@ -23,7 +22,7 @@ body {
     <!--width="600"-->
     <!--height="450"-->
     <!--frameborder="0" style="border:0"-->
-    <!--src="https://www.google.com/maps/embed/v1/directions?key=AIzaSyD8KpNTcqcPO0sTepyUDn2Uc2DO33052ig&origin={{settings['origin']|safe}}&destination={{settings['destination']|safe}}">-->
+    <!--src="https://www.google.com/maps/embed/v1/directions?key=AIzaSyD8KpNTcqcPO0sTepyUDn2Uc2DO33052ig&origin=Alameda+CA&destination=San+Francisco+CA">-->
   <!--</iframe>-->
 
 
@@ -32,13 +31,12 @@ body {
     <!--src="https://www.google.com/maps/embed/v1/place?key=AIzaSyD8KpNTcqcPO0sTepyUDn2Uc2DO33052ig&q={{settings['userlon']}},{{settings['userlat'] | safe}}">-->
   </center>
   <p>
-  <hr>
-  <p>
   <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD8KpNTcqcPO0sTepyUDn2Uc2DO33052ig"> </script>
 
 
 
-<div id="map-canvas" style="width: 500px; height: 400px"></div>
+  <center>
+<div id="map-canvas" style="width: 1200px; height: 800px"></div>
 <script type="text/javascript">
 ///////////////////////////////////////////////////////////////////////////////////
 ////          Javascript for drawing polylines!          //////////////////////////
@@ -50,27 +48,19 @@ function initialize() {
     zoom: 2,
     mapTypeId: google.maps.MapTypeId.ROADMAP
   });
-  {{settings['legs']|safe}}
-  //var path = [new google.maps.LatLng(37.772323, -122.214897),
-  //  new google.maps.LatLng(21.291982, -157.821856),
-  //  new google.maps.LatLng(-18.142599, 178.431),
-  //  new google.maps.LatLng(-27.46758, 153.027892)];
-  //var path = [{{settings['test_js']}}];
+  {{settings['bbox']|safe}}
+  map.fitBounds(bbox);
+  {{settings['route_js']|safe}}
+  {{settings.contour_js|safe}}
 
-  //var line = new google.maps.Polyline({
-  //  path: path,
-  //  strokeColor: '#ff0000',
-  //  strokeOpacity: 1.0,
-  //  strokeWeight: 2
-  //});
 
-  //line.setMap(map);
 }
 google.maps.event.addDomListener(window, 'load', initialize);
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 </script>
   
+  </center>
   
   </div>
 {% endblock %}
