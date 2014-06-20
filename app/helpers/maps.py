@@ -423,6 +423,24 @@ def leg_and_contour_to_js(leg, wiki_dict):
       zIndex: -2
     }});
     shape.setMap(map);
+  //  var marker = new google.maps.Marker({{
+  //      position: paths[0],
+  //      map: map,
+  //      title: String(paths[0])
+  //  }});
+    //google.maps.event.addListener(marker, 'click', (function(marker) {{
+    //  return function() {{
+    //    infoWindow.setContent('{3}');
+    //    infoWindow.setPosition(marker.latLng);
+    //    infoWindow.open(map);
+    //  }}
+    //}})(marker));
+    //google.maps.event.addListener(shape, 'click', (function(shape) {{
+    //  return function() {{
+    //    infoWindow.setContent('{3}');
+    //    infoWindow.open(map, shape);
+    //  }}
+    //}})(polyline));
     
     """.format( LatLngs, color, scs, wiki_data)
 
@@ -441,19 +459,29 @@ def leg_and_contour_to_js(leg, wiki_dict):
   LatLngs = ','.join(list_of_LatLngs)
   leg_js = """
     var polypath = [{0}];
+    var middle_point = polypath[Math.floor(polypath.length/2)];
+    console.log(polypath.length);
+    console.log(Math.floor(polypath.length/2));
     var polyline = new google.maps.Polyline({{
       path: polypath,
       strokeColor: '{1}',
       strokeOpacity: {2},
       strokeWeight: {3},
+      pos: middle_point
     }});
     polyline.setMap(map);
     google.maps.event.addListener(polyline, 'click', (function(polyline) {{
       return function() {{
         infoWindow.setContent('{4}');
-        infoWindow.open(map, polyline);
+        //infoWindow.open(map, polyline);
+        infoWindow.setPosition(this.pos);
+        infoWindow.open(map);
       }}
     }})(polyline));
+    // Click anywhere on the map to close the info window
+    google.maps.event.addListener(map, "click", function () {{
+      infoWindow.close();
+    }});
   """.format( LatLngs, color, opacity, weight, wiki_data)
 
   #make_LatLng_str = lambda x: 'new google.maps.LatLng'+str(x[::-1])

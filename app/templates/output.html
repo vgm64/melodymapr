@@ -17,32 +17,25 @@
         <dt>Genre: </dt><dd>{{ settings['genre'] }} </dd>
       </dl>
     </div> <!-- custom_bg -->
-      <img id = "loading" src = "http://sierrafire.cr.usgs.gov/images/loading.gif" alt = "Loading indicator">
 
+    <!-- Loading wheel -->
+    <!--<img id = "loading" src = "http://sierrafire.cr.usgs.gov/images/loading.gif" alt = "Loading indicator">-->
 
     <!-- WRITE OUT THE RESULTS -->
-    {% for leg in settings['legs'] %}
     <div class="custom_bg bit_of_padding bit_of_bot_margin">
-      <div class="btn">{{ leg.scs }} </div>
-      <div class="btn">{{ leg.freq }} </div>
-      <div class="btn">{{ leg.dur }} </div>
-    </div> <!-- custom_bg -->
-    {% endfor %}
-    {{ settings.keys() }}
-    {{ settings.legs[0].keys() }}
-
-    <!-- WRITE OUT THE RESULTS -->
-    <!--<div class="custom_bg bit_of_padding bit_of_bot_margin">-->
-    <table class="table">
+    <h3>Available Stations:</h3>
+    <table class="table table-hover table-striped">
     {% for leg in settings['legs'] %}
+      {% if leg.freq != None %}
       <tr>
       <td>{{ leg.scs }} </td>
       <td>{{ leg.freq }} </td>
       <td>{{ leg.dur }} </td>
       </tr>
-    <!--</div> [> custom_bg <]-->
-    </table>
+      {% endif %}
     {% endfor %}
+    </table>
+    </div> <!-- custom_bg -->
 
     <!--<div class="bit_of_top_margin"></div>-->
 
@@ -51,7 +44,7 @@
   <div class="col-md-8 magic_freezer">
     <div>
       <center>
-      <div id="map-canvas" style="width: 100%; height: 800px"></div>
+      <div id="map-canvas" style="width: 100%; height: 800px; padding-bottom:60px;"></div>
       <!--<div id="map-canvas" style="width: 100%;  margin-left:auto; margin-rigth:auto; martin-top:60px; over"></div>-->
       <!--<div id="map-canvas" style="width: auto; height: auto margin-left:auto; margin-rigth:auto; martin-top:60px; over"></div>-->
       </center>
