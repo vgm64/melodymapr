@@ -40,10 +40,11 @@ def query_db(con, lon, lat, genre):
   geodesics = np.array(results[7], dtype=float)
   contour_lons = [np.fromstring(i, sep=',') for i in results[8]]
   contour_lats = [np.fromstring(i, sep=',') for i in results[9]]
+  frequencies = np.array(results[10], dtype=float)
 
   cur.close()
   #con.close()
-  return antlons, antlats, scss, cats, separations, geodesics, contour_lons, contour_lats
+  return antlons, antlats, scss, cats, separations, geodesics, contour_lons, contour_lats, frequencies
 
 def get_haversine_query(lon, lat, genre=None):
   """
@@ -73,10 +74,10 @@ def get_haversine_query(lon, lat, genre=None):
   """
   # Try a variation without the great circle
   base_query = """
-  SELECT {0} , {1}, b.antlon, b.antlat, b.scs, map.cat,
+  SELECT {0} , {1}, b.antlon, b.antlat, b.scs, map.cat, 
   1 AS geod,
   2 AS separation,
-  b.lons, b.lats
+  b.lons, b.lats, map.frequency
   FROM contours b
   JOIN contour_cat_map map
   ON b.id = map.contour_id
@@ -112,32 +113,32 @@ def find_radio_stations(con, route, var_dict):
     # approximation:
     if not result: 
       antennas_for_each_node.append(None)
-      print 'XX', i, result
+      #print 'XX', i, result
       continue
-    print '>>', i, str(result[:3]).replace('\n', '')
+    #print '>>', i, str(result[:3]).replace('\n', '')
 
     # There is at least one station whos rectangular coverage includes the node.
     found_in_contour=False
-    antlons, antlats, scss, cats, separations, geodesics, contour_lons, contour_lats = result
+    antlons, antlats, scss, cats, separations, geodesics, contour_lons, contour_lats, frequencies = result
     antenna_dict = {}
     for antenna_num in xrange(len(contour_lons)):
       #print 'antenna_num', antenna_num
       lons = contour_lons[antenna_num]
       lats = contour_lats[antenna_num]
       path = Path(zip(lons, lats))
-      if i > 53 and i < 62:
-        print '\t', antenna_num, 'of', len(contour_lons), 'antennas.',
-        print '\tContour LonLat:', lons[0], lats[0], 'Node LonLat:', node[0], node[1]
+      #if i > 53 and i < 62:
+        #print '\t', antenna_num, 'of', len(contour_lons), 'antennas.',
+        #print '\tContour LonLat:', lons[0], lats[0], 'Node LonLat:', node[0], node[1]
       if path.contains_point(node) and scss[antenna_num] != 'NA':
-        print '\tQQQ'
+        #print '\tQQQ'
         antennas_for_each_node.append(zip(*result)[antenna_num])
         found_in_contour = True
-        print '\tBreaking!'
+        #print '\tBreaking!'
         break
     if not found_in_contour:
-      print '\tDid not find found_in_contour'
+      #print '\tDid not find found_in_contour'
       antennas_for_each_node.append(None)
-    print str(antennas_for_each_node[-1])[0]
+    #print str(antennas_for_each_node[-1])[0]
   return antennas_for_each_node
 
 #def in

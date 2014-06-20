@@ -3,6 +3,7 @@ import json
 from app.helpers.secrets import get_API_key
 from app.helpers.gmap_encoder import decode
 import itertools
+import numpy as np
 
 def geocode(search_term):
   API_KEY = get_API_key()
@@ -21,6 +22,7 @@ def get_directions(origin, destination):
 
   base_url = "https://maps.googleapis.com/maps/api/directions/json?origin={}&destination={}&key={}"
   query = base_url.format(urllib2.quote(origin), urllib2.quote(destination), API_KEY)
+  print query
   resp = urllib2.urlopen(query)
   data = json.load(resp)
   return data
@@ -30,31 +32,108 @@ def get_directions(origin, destination):
 
 def get_route_from_directions(directions):
   """ Take a JSON object and return a tuple of lon/lats """
-  encoded_route_data = directions['routes'][0]['overview_polyline']['points']
-  route_data = decode(encoded_route_data)
-  #print '################'
-  #print route_data[0:3]
 
-  #print type(route_data)
+  # Form a very dense array of points that describe the driving path.
   steps = directions['routes'][0]['legs'][0]['steps']
   step_polylines = [step['polyline']['points'] for step in steps]
-  #print "\n-->".join(step_polylines)
   decoded_route_data = map(decode, step_polylines)
-  #print decoded_route_data
   route_data = itertools.chain.from_iterable(decoded_route_data)
-  #for d in decoded_route_data:
-    #print '\n==>', d
-  #print "\n==>".join(decoded_route_data)
-  #route_data = []
-  #map(route_data.extend, decoded_route_data)
   route_data = list(route_data)
-  desired_num_nodes = 100
+
+  # Determine how many points to use.
+  total_distance = directions['routes'][0]['legs'][0]['distance']['value'] # Meters
+  total_duration = directions['routes'][0]['legs'][0]['duration']['value'] # Seconds
+  if total_distance < 400000: # 400 km
+    desired_num_nodes = 100
+  elif total_distance < 4000000: # 4000 km
+    desired_num_nodes = 300
+  else:
+    desired_num_nodes = 500
+  desired_num_nodes = 50
+
+  distance1 = route_data[1:]
+  distance2 = route_data[:-1]
+  lon1, lat1 = zip(*distance1)
+  lon2, lat2 = zip(*distance2)
+  geodesics = haversine_dist(lon1, lat1, lon2, lat2) # Results in km. Converted below.
+  print zip(distance1, distance2, geodesics)[:3]
+  print sum(geodesics)
+  geodesics = np.r_[0, geodesics]
+  duration = np.cumsum(geodesics)*total_duration/(total_distance/1000.)
+  print 'BLAST:', total_duration, total_distance, duration[-1]
+  print '######', duration
+
+  def seconds_to_time(duration):
+    if duration < 60:
+      return '%.0f seconds' % duration
+    elif duration < 60*60:
+      return '%.0f minutes' % (duration/60.)
+    elif duration < 60*60*24:
+      return '%.1f hours' % (duration/60./60.)
+    else:
+      return '%.1f days' % (duration/60./60./24.)
+  duration = map(seconds_to_time, duration)
+
+  # Get the time between each of the "steps" in the driving path. Unfortunately,
+  # len(route_data) = \Sum_N( n_i ) where n_i is the number of nodes decoded from
+  # each of the N steps. I have the duration of each step, so let's extrapolate.
+  # Duration times (in seconds)
+  #step_durations = [step['duration']['value'] for step in steps]
+  #step_distances = [step['distance']['value'] for step in steps]
+  #step_lengths   = map(len, decoded_route_data)
+  
+
+  #duration_array = np.concatenate( [[1.*i/j]*j for i,j in zip(step_durations, step_lengths)] )
+  #cummulative_duration_array = np.cumsum(duration_array)
+  #estimated_node_durations = []
+  #n_steps = len(steps)
+  #for istep in xrange(n_steps):
+    #num_nodes_in_step = len(decoded_route_data[istep])
+    #fake_durations = np.linspace(0, step_durations, num_nodes_in_step)
+    #points_to_sample = np.arange(0, num_nodes_in_step, desired_num_nodes)
+    #duration = step_durations[istep]
+    #for inode in xrange(n_steps):
+
+
+
+  print ':', total_distance, desired_num_nodes
   if desired_num_nodes > len(route_data):
-    return route_data
+    return route_data, duration
 
   resampled_route_data = route_data[::(len(route_data) // desired_num_nodes)]
+  resampled_duration = duration[::(len(route_data) // desired_num_nodes)]
   print '--> Down sampled from', len(route_data), 'to', len(resampled_route_data), 'nodes'
-  return resampled_route_data
+  print '--> Down sampled from', len(duration), 'to', len(resampled_duration), 'nodes'
+  return resampled_route_data, resampled_duration
+
+
+def resample_route_data(data):
+  lats, lons = np.array(data).T
+  lat1, lat2 = lats[:-1], lats[1:]
+  lon1, lon2 = lons[:-1], lons[1:]
+  separations = haversine_dist(lon1, lat1, lon2, lat2)
+  
+  return haversine_dist(lon1, lat1, lon2, lat2)
+
+def haversine_dist(lon1, lat1, lon2, lat2):
+  """
+  Calculate the great circle distance between two points
+  on the earth (specified in decimal degrees)
+  """
+  # convert decimal degrees to radians
+  lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
+
+  # haversine formula
+  dlon = lon2 - lon1
+  dlat = lat2 - lat1
+  a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
+  c = 2 * np.arcsin(np.sqrt(a))
+
+  miles = 3956.27 * c
+  return miles
+  # 6367 km is the radius of the Earth
+  #km = 6367 * c
+  #return km 
 
 def leg_to_js(route, settings = {}):
   """ I need to take input like:
@@ -81,68 +160,321 @@ def leg_to_js(route, settings = {}):
   color = settings.get('strokeColor', '#ff0000')
   opacity = settings.get('stokeOpacity', 1.0)
   weight = settings.get('stokeWeight', 10)
+  if color == '#0C090A':
+    weight = 2
+    opacity = .7
   line_var = """var line = new google.maps.Polyline({{
   path: path,
   strokeColor: '{0}',
   strokeOpacity: {1},
   strokeWeight: {2}
 }});
-// Add a new marker at the new plotted point on the polyline.
-var infoWindow = new google.maps.InfoWindow();
-for (i = 0; i < path.length; i++) {{ 
-    var marker = new google.maps.Marker({{
-        position: path[i],
-        map: map,
-        title: String(path[i])
-    }});
-    google.maps.event.addListener(marker, 'click', (function(marker) {{
-      return function() {{
-        infoWindow.setContent(marker.getTitle());
-        infoWindow.open(map, marker);
-      }}
-    }})(marker));
-}};
+//// Add a new marker at the new plotted point on the polyline.
+//var infoWindow = new google.maps.InfoWindow();
+//for (i = 0; i < path.length; i++) {{ 
+//    var marker = new google.maps.Marker({{
+//        position: path[i],
+//        map: map,
+//        title: String(path[i])
+//    }});
+//    google.maps.event.addListener(marker, 'click', (function(marker) {{
+//      return function() {{
+//        infoWindow.setContent(marker.getTitle());
+//        infoWindow.open(map, marker);
+//      }}
+//    }})(marker));
+//}};
 line.setMap(map);
   """.format(color, opacity, weight)
 
   return path_var + line_var
 
 
-def contour_to_js(contour, settings = {}):
-  """ I need to take input like:
-      (21.291982, -157.821856),
-      (-18.142599, 178.431),
-      (23.982, -137.21856)
-  and turn that into:
-      var path1 = [new google.maps.LatLng(21.291982, -157.821856),
-      new google.maps.LatLng(-18.142599, 178.431),
-      new google.maps.LatLng(23.982, -137.21856)]
+#def contour_to_js(contour, settings = {}):
+#  """ I need to take input like:
+#      (21.291982, -157.821856),
+#      (-18.142599, 178.431),
+#      (23.982, -137.21856)
+#  and turn that into:
+#      var path1 = [new google.maps.LatLng(21.291982, -157.821856),
+#      new google.maps.LatLng(-18.142599, 178.431),
+#      new google.maps.LatLng(23.982, -137.21856)]
+#
+#      var line1 = new google.maps.Polyline({
+#          path: path1,
+#          strokeColor: '#ff0000',
+#          strokeOpacity: 1.0,
+#          strokeWeight: 2
+#      });
+#  """
+#
+#  make_LatLng_str = lambda x: 'new google.maps.LatLng'+str(x[::-1])
+#  path_strings = map(make_LatLng_str, contour)
+#  path_var = ', '.join(path_strings)
+#  path_var = 'var path = [ {0} ]; \n'.format(path_var)
+#  color = settings.get('strokeColor', '#ff0000')
+#  opacity = settings.get('stokeOpacity', 1.0)
+#  weight = settings.get('stokeWeight', 10)
+#  line_var = """var line = new google.maps.Polygon({{
+#  paths: path,
+#  strokeColor: '{0}',
+#  strokeOpacity: {1},
+#  strokeWeight: {2}
+#}});
+#line.setMap(map);
+#  """.format(color, opacity, weight)
+#
+#  return path_var + line_var
 
-      var line1 = new google.maps.Polyline({
-          path: path1,
-          strokeColor: '#ff0000',
-          strokeOpacity: 1.0,
-          strokeWeight: 2
-      });
+def contour_to_js(leg):
+  scs = leg['scs']
+  color = leg['color']
+
+  list_of_LatLngs = []
+  if not leg['contour']:
+    return ''
+  for i in xrange(len(leg['contour'])):
+    latlon = leg['contour'][i]
+    print scs, latlon
+    #LatLng_str = 'new google.maps.LatLng(%, %f)'+(str(leg['contour'][i][::-1]))
+    list_of_LatLngs.append('new google.maps.LatLng(%f, %f)'%(latlon[1], latlon[0]))
+  LatLngs = ','.join(list_of_LatLngs)
+  js = """
+  var paths = [{0}];
+  var shape = new google.maps.Polygon({{
+    paths: paths,
+    strokeColor: '{3}',
+    strokeOpacity: 0.7,
+    strokeWeight: 2,
+    fillColor: '{3}',
+    fillOpacity: 0.10,
+    zIndex: -2
+  }});
+  shape.setMap(map);
+  var marker = new google.maps.Marker({{
+      position: paths[0],
+      map: map,
+      title: '{1}'
+  }});
+  var infoWindow = new google.maps.InfoWindow();
+  google.maps.event.addListener(marker, 'click', (function(marker) {{
+    return function() {{
+      infoWindow.setContent('{2}');
+      infoWindow.open(map, marker);
+    }}
+  }})(marker));
+  google.maps.event.addListener(shape, 'click', (function(shape) {{
+    return function() {{
+      infoWindow.setContent('{2}');
+      infoWindow.open(map, shape);
+    }}
+  }})(marker));
+  
+  """.format( LatLngs, scs, scs, color)
+  return js
+  #""".format( LatLngs, scs, get_wiki_table(scs))
+
+def render_contours_and_legs(groups):
+  """ The argument of this method is a dictionary that looks like:
+  #'scs':    Short call sign e.g. KITS
+  #'nodes':  A list of the LonLats
+  #'empty':  A boolean to indicate no radio station available.
   """
 
-  make_LatLng_str = lambda x: 'new google.maps.LatLng'+str(x[::-1])
-  path_strings = map(make_LatLng_str, contour)
-  path_var = ', '.join(path_strings)
-  path_var = 'var path = [ {0} ]; \n'.format(path_var)
-  color = settings.get('strokeColor', '#ff0000')
-  opacity = settings.get('stokeOpacity', 1.0)
-  weight = settings.get('stokeWeight', 10)
-  line_var = """var line = new google.maps.Polyline({{
-  path: path,
-  strokeColor: '{0}',
-  strokeOpacity: {1},
-  strokeWeight: {2}
-}});
-line.setMap(map);
-  """.format(color, opacity, weight)
+  try:
+    wiki_file = open("wiki.json")
+  except:
+    print "Problem opening wiki.json. Not surprised."
+  wiki_dict = json.load( wiki_file )
+  print wiki_dict.keys()
+  full_js_string = ''
+  for group in groups:
+    full_js_string += leg_and_contour_to_js(group, wiki_dict)
+  return full_js_string
 
-  return path_var + line_var
+#def leg_and_contour_to_js(leg, wiki_dict):
+#  scs = leg['scs']
+#  color = leg['color']
+#  freq = leg['freq']
+#  duration = leg['dur']
+#  wiki_data = wiki_dict.get(scs, scs)
+#  list_of_LatLngs = []
+#  if not leg['contour']:
+#    contour_js = ""
+#  else:
+#    for i in xrange(len(leg['contour'])):
+#      latlon = leg['contour'][i]
+#      print scs, latlon
+#      #LatLng_str = 'new google.maps.LatLng(%, %f)'+(str(leg['contour'][i][::-1]))
+#      list_of_LatLngs.append('new google.maps.LatLng(%f, %f)'%(latlon[1], latlon[0]))
+#    LatLngs = ','.join(list_of_LatLngs)
+#    contour_js = """
+#    var paths = [{0}];
+#    var shape = new google.maps.Polygon({{
+#      paths: paths,
+#      strokeColor: '{1}',
+#      strokeOpacity: 0.7,
+#      strokeWeight: 2,
+#      fillColor: '{1}',
+#      fillOpacity: 0.10,
+#      zIndex: -2
+#    }});
+#    shape.setMap(map);
+#    //var marker = new google.maps.Marker({{
+#    //    position: paths[0],
+#    //    map: map,
+#    //    title: '{2}'
+#    //}});
+#    var infoWindow = new google.maps.InfoWindow();
+#    //google.maps.event.addListener(marker, 'click', (function(marker) {{
+#    //  return function() {{
+#    //    infoWindow.setContent('{3}');
+#    //    infoWindow.open(map, marker);
+#    //  }}
+#    //}})(marker));
+#    google.maps.event.addListener(shape, 'click', (function(shape) {{
+#      return function() {{
+#        infoWindow.setContent('{3}');
+#        infoWindow.open(map, shape);
+#      }}
+#    //}})(marker));
+#    }})(shape));
+#    
+#    """.format( LatLngs, color, scs, wiki_data)
+#
+#  # Ok, now here's the polyline.
+#  opacity = 1
+#  weight = 2
+#  if color == '#0C090A':
+#    weight = 2
+#    opacity = .7
+#  list_of_LatLngs = []
+#  for i in xrange(len(leg['nodes'])):
+#    latlon = leg['nodes'][i]
+#    #print scs, latlon
+#    #LatLng_str = 'new google.maps.LatLng(%, %f)'+(str(leg['contour'][i][::-1]))
+#    list_of_LatLngs.append('new google.maps.LatLng(%f, %f)'%(latlon[1], latlon[0]))
+#  LatLngs = ','.join(list_of_LatLngs)
+#  leg_js = """
+#    var polypath = [{0}];
+#    var line = new google.maps.Polyline({{
+#      path: polypath,
+#      strokeColor: '{1}',
+#      strokeOpacity: {2},
+#      strokeWeight: {3},
+#    }});
+#    line.setMap(map);
+#    var infoWindow = new google.maps.InfoWindow();
+#    google.maps.event.addListener(polyline, 'click', (function(polyline) {{
+#      return function() {{
+#        infoWindow.setContent('{4}');
+#        infoWindow.open(map, polyline);
+#      }}
+#    }})(polyline));
+#  """.format( LatLngs, color, opacity, weight, wiki_data)
+#
+#  #make_LatLng_str = lambda x: 'new google.maps.LatLng'+str(x[::-1])
+#  #path_strings = map(make_LatLng_str, route)
+#  #path_var = ', '.join(path_strings)
+#  #path_var = 'var path = [ {0} ]; \n'.format(path_var)
+#  #color = settings.get('strokeColor', '#ff0000')
+#  #opacity = settings.get('stokeOpacity', 1.0)
+#  #weight = settings.get('stokeWeight', 10)
+#  #if color == '#0C090A':
+#    #weight = 2
+#    #opacity = .7
+#  #line_var = """var line = new google.maps.Polyline({{
+#  #path: path,
+#  #strokeColor: '{0}',
+#  #strokeOpacity: {1},
+#  #strokeWeight: {2}
+##}});
+#  #""".format( LatLngs, scs, get_wiki_table(scs))
+#
+#  return contour_js + leg_js
+
+def leg_and_contour_to_js(leg, wiki_dict):
+  scs = leg['scs']
+  color = leg['color']
+  freq = leg['freq']
+  duration = leg['dur']
+  wiki_data = wiki_dict.get(scs, scs)
+  list_of_LatLngs = []
+  if not leg['contour']:
+    contour_js = ""
+  else:
+    for i in xrange(len(leg['contour'])):
+      latlon = leg['contour'][i]
+      print scs, latlon
+      #LatLng_str = 'new google.maps.LatLng(%, %f)'+(str(leg['contour'][i][::-1]))
+      list_of_LatLngs.append('new google.maps.LatLng(%f, %f)'%(latlon[1], latlon[0]))
+    LatLngs = ','.join(list_of_LatLngs)
+    contour_js = """
+    //var infoWindow = new google.maps.InfoWindow();
+
+    var paths = [{0}];
+    var shape = new google.maps.Polygon({{
+      paths: paths,
+      strokeColor: '{1}',
+      strokeOpacity: 0.7,
+      strokeWeight: 2,
+      fillColor: '{1}',
+      fillOpacity: 0.10,
+      zIndex: -2
+    }});
+    shape.setMap(map);
+    
+    """.format( LatLngs, color, scs, wiki_data)
+
+  # Ok, now here's the polyline.
+  opacity = 1
+  weight = 6
+  if color == '#0C090A':
+    weight = 2
+    opacity = .7
+  list_of_LatLngs = []
+  for i in xrange(len(leg['nodes'])):
+    latlon = leg['nodes'][i]
+    #print scs, latlon
+    #LatLng_str = 'new google.maps.LatLng(%, %f)'+(str(leg['contour'][i][::-1]))
+    list_of_LatLngs.append('new google.maps.LatLng(%f, %f)'%(latlon[1], latlon[0]))
+  LatLngs = ','.join(list_of_LatLngs)
+  leg_js = """
+    var polypath = [{0}];
+    var polyline = new google.maps.Polyline({{
+      path: polypath,
+      strokeColor: '{1}',
+      strokeOpacity: {2},
+      strokeWeight: {3},
+    }});
+    polyline.setMap(map);
+    google.maps.event.addListener(polyline, 'click', (function(polyline) {{
+      return function() {{
+        infoWindow.setContent('{4}');
+        infoWindow.open(map, polyline);
+      }}
+    }})(polyline));
+  """.format( LatLngs, color, opacity, weight, wiki_data)
+
+  #make_LatLng_str = lambda x: 'new google.maps.LatLng'+str(x[::-1])
+  #path_strings = map(make_LatLng_str, route)
+  #path_var = ', '.join(path_strings)
+  #path_var = 'var path = [ {0} ]; \n'.format(path_var)
+  #color = settings.get('strokeColor', '#ff0000')
+  #opacity = settings.get('stokeOpacity', 1.0)
+  #weight = settings.get('stokeWeight', 10)
+  #if color == '#0C090A':
+    #weight = 2
+    #opacity = .7
+  #line_var = """var line = new google.maps.Polyline({{
+  #path: path,
+  #strokeColor: '{0}',
+  #strokeOpacity: {1},
+  #strokeWeight: {2}
+#}});
+  #""".format( LatLngs, scs, get_wiki_table(scs))
+
+  return contour_js + leg_js
 
 def get_bounding_box(directions):
   bounding_NE = directions['routes'][0]['bounds']['northeast']
@@ -156,89 +488,107 @@ def get_bounding_box(directions):
   return bbox
 
 
-def consolidate_tunes(route, route_tunes):
+def consolidate_tunes(route, route_tunes, durations):
   num_nodes = len(route)
   legs = []
   current_leg = None
   first_node = route[0]
   first_tune = route_tunes[0]
+  first_duration = durations[0]
   if first_tune == None:
-    current_leg = {'scs':'NA', 'nodes':[], 'empty':True, 'contour':None}
+    current_leg = {'scs':'NA', 'nodes':[], 'empty':True, 'contour':None, 'freq':None, 'dur':'to start'}
   else:
     contour = zip(*first_tune[6:8])
-    current_leg = {'scs':first_tune[2], 'nodes':[], 'empty':False, 'contour':contour}
-
+    freq = first_tune[8]
+    current_leg = {'scs':first_tune[2], 'nodes':[], 'empty':False, 'contour':contour, 'freq':freq, 'dur':'to start'}
 
   # Loop over all each node. Add to group.
-  for inode in xrange(1,num_nodes):
-    print '#>> ', inode, 'LatLng', route[inode],
-    if route_tunes[inode]:
-      print route_tunes[inode][:4]
-    else:
-      print route_tunes[inode]
+  for inode in xrange(0,num_nodes):
+    print durations[inode]
+    #print '#>> ', inode, 'LatLng', route[inode],
+    #if route_tunes[inode]:
+      #print route_tunes[inode][:4]
+    #else:
+      #print route_tunes[inode]
     # Remember, some nodes don't have radio reception (set to None):
     if not route_tunes[inode]:
-      # This has the same station as the previous station
+      # The current leg is a no-reception leg:
       if current_leg['empty']:
         current_leg['nodes'].append(route[inode])
-      # This has a new station name.
+      # The current leg is has reception. We moved to a no-reception region.
       else:
-        current_leg['nodes'].append(route[inode])
         legs.append(current_leg)
-        current_leg = {'scs':'NA', 'nodes':[], 'empty':True, 'contour':None}
+        current_leg = {'scs':'NA', 'nodes':[], 'empty':True, 'contour':None, 'freq':None}
+        current_leg['nodes'].append(route[inode])
+        current_leg['dur'] = durations[inode]
     # But if they do have radio reception:
     else:
-      # This has the same station as the previous station
+      # This has the same station as the previous node.
       if current_leg['scs'] == route_tunes[inode][2]:
         current_leg['nodes'].append(route[inode])
       # This has a new station name.
       else:
-        current_leg['nodes'].append(route[inode])
         legs.append(current_leg)
         contour = zip(*route_tunes[inode][6:8])
-        current_leg = {'scs':route_tunes[inode][2], 'nodes':[], 'empty':False, 'contour':contour}
-    legs.append(current_leg)
+        freq = route_tunes[inode][8]
+        current_leg = {'scs':route_tunes[inode][2], 'nodes':[], 'empty':False, 'contour':contour, 'freq':freq}
+        current_leg['nodes'].append(route[inode])
+        current_leg['dur'] = durations[inode]
+    # Let's close the gaps between legs. Average the position of this node
+    # and the previous node.
+    #if inode > 0:
+      #this_node = current_leg['nodes'][-1]
+      #prev_node = legs[-1]['nodes'][-1]
+      #print '##', inode, ':', this_node, prev_node, this_node == prev_node
+  legs.append(current_leg)
+
+  # Add on points to each leg so that they touch.
+  for ileg in xrange(len(legs)-1):
+    leg = legs[ileg]
+    next_leg = legs[ileg+1]
+    leg_lastnode = leg['nodes'][-1]
+    next_leg_firstnode = next_leg['nodes'][0]
+    crossing_point = (leg_lastnode[0]+next_leg_firstnode[0])/2., (leg_lastnode[1]+next_leg_firstnode[1])/2.
+    leg['nodes'].append( crossing_point )
+    next_leg['nodes'].insert(0, crossing_point)
 
   # This is just to print stuff out!
-  num_nodes = 0
-  num_legs = 0
-  for i, node in enumerate(legs):
-    #print i, len(legs), node['scs'], node['nodes'][0], node['nodes'][-1]
-    if num_nodes == 0:
-      current_node = node
-    if node['scs'] == current_node['scs']:
-      num_nodes += 1
-    else:
-      print "--> Leg %d: %s nodes and has call sign %s" % (num_legs, num_nodes, current_node['scs'])
-      num_legs += 1
-      current_node = node
-      num_nodes = 1
-  print "--> Leg %d: %s nodes and has call sign %s" % (num_legs, num_nodes, current_node['scs'])
-  print route[::-1][:10]
-  print legs[-1]['nodes']
+  for i, leg in enumerate(legs):
+    print "--> Leg %d: %s nodes and has call sign %s" % (i, len(leg['nodes']), leg['scs'])
   return legs
+
+def assign_colors(grouped_nodes):
+  """ The argument of this method is a dictionary that looks like:
+  'scs':    Short call sign e.g. KITS
+  'nodes':  A list of the LonLats
+  'empty':  A boolean to indicate no radio station available.
+  """
+
+  colors = ['#00AB6F', '#0C5AA6', '#FF9700', '#FF5300']
+  for group in grouped_nodes:
+    group['color'] = '#0C090A'
+    if group['scs'] != 'NA':
+      group['color'] = colors[0]
+      colors = colors[1:] + [colors[0]]
+  return
 
 def render_legs(grouped_nodes):
   """ The argument of this method is a dictionary that looks like:
   'scs':    Short call sign e.g. KITS
   'nodes':  A list of the LonLats
   'empty':  A boolean to indicate no radio station available.
+  'color':  An html color
   """
   full_js_string = ''
   #colors = ['#ff0000', '#09CA32', '#00ff00', '#03C11D']
-  colors = ['#2E16B1',  '#640CAB',  '#FFF500',  '#FFCB00']
+  #colors = ['#2E16B1',  '#640CAB',  '#FFF500',  '#FFCB00']
   # http://colorschemedesigner.com/#
-  colors = ['#00AB6F', '#0C5AA6', '#FF9700', '#FF5300']
+  #colors = ['#00AB6F', '#0C5AA6', '#FF9700', '#FF5300']
   #colors = ['#444444']
 
   for group in grouped_nodes:
     leg = group['nodes']
-    #print '--#', len(leg)
-    if group['scs'] == 'NA':
-      color = '#0C090A'
-    else:
-      color= colors[0]
-      colors = colors[1:] + [colors[0]]
+    color = group['color']
     full_js_string += leg_to_js(leg, {'strokeColor':color})
   return full_js_string
 
@@ -249,14 +599,9 @@ def render_contours(grouped_nodes):
   #'empty':  A boolean to indicate no radio station available.
   """
   full_js_string = ''
-  colors = ['#ff0000', '#00ffff', '#00ff00', '#0f0f00']
-  colors = ['#00AB6F', '#0C5AA6', '#FF9700', '#FF5300']
+  #colors = ['#ff0000', '#00ffff', '#00ff00', '#0f0f00']
+  #colors = ['#00AB6F', '#0C5AA6', '#FF9700', '#FF5300']
   for group in grouped_nodes:
-    leg = group['contour']
-    #print '--#', len(leg)
-    colors = colors[1:] + [colors[0]]
-    if not leg:
-      continue
-    full_js_string += contour_to_js(leg, {'strokeColor':colors[0]})
+    full_js_string += contour_to_js(group)
   return full_js_string
 
