@@ -22,13 +22,9 @@ def get_directions(origin, destination):
 
   base_url = "https://maps.googleapis.com/maps/api/directions/json?origin={}&destination={}&key={}"
   query = base_url.format(urllib2.quote(origin), urllib2.quote(destination), API_KEY)
-  print query
   resp = urllib2.urlopen(query)
   data = json.load(resp)
   return data
-  #encoded_route_data = data['routes'][0]['overview_polyline']['points']
-  #route_data = decode(encoded_route_data)
-  #return route_data
 
 def get_route_from_directions(directions):
   """ Take a JSON object and return a tuple of lon/lats """
@@ -56,12 +52,12 @@ def get_route_from_directions(directions):
   lon1, lat1 = zip(*distance1)
   lon2, lat2 = zip(*distance2)
   geodesics = haversine_dist(lon1, lat1, lon2, lat2) # Results in km. Converted below.
-  print zip(distance1, distance2, geodesics)[:3]
-  print sum(geodesics)
+  #print zip(distance1, distance2, geodesics)[:3]
+  #print sum(geodesics)
   geodesics = np.r_[0, geodesics]
   duration = np.cumsum(geodesics)*total_duration/(total_distance/1000.)
-  print 'BLAST:', total_duration, total_distance, duration[-1]
-  print '######', duration
+  #print 'BLAST:', total_duration, total_distance, duration[-1]
+  #print '######', duration
 
   def seconds_to_time(duration):
     if duration < 60:
@@ -82,28 +78,13 @@ def get_route_from_directions(directions):
   #step_distances = [step['distance']['value'] for step in steps]
   #step_lengths   = map(len, decoded_route_data)
   
-
-  #duration_array = np.concatenate( [[1.*i/j]*j for i,j in zip(step_durations, step_lengths)] )
-  #cummulative_duration_array = np.cumsum(duration_array)
-  #estimated_node_durations = []
-  #n_steps = len(steps)
-  #for istep in xrange(n_steps):
-    #num_nodes_in_step = len(decoded_route_data[istep])
-    #fake_durations = np.linspace(0, step_durations, num_nodes_in_step)
-    #points_to_sample = np.arange(0, num_nodes_in_step, desired_num_nodes)
-    #duration = step_durations[istep]
-    #for inode in xrange(n_steps):
-
-
-
-  print ':', total_distance, desired_num_nodes
   if desired_num_nodes > len(route_data):
     return route_data, duration
 
   resampled_route_data = route_data[::(len(route_data) // desired_num_nodes)]
   resampled_duration = duration[::(len(route_data) // desired_num_nodes)]
   print '--> Down sampled from', len(route_data), 'to', len(resampled_route_data), 'nodes'
-  print '--> Down sampled from', len(duration), 'to', len(resampled_duration), 'nodes'
+  #print '--> Down sampled from', len(duration), 'to', len(resampled_duration), 'nodes'
   return resampled_route_data, resampled_duration
 
 
@@ -235,7 +216,7 @@ def contour_to_js(leg):
     return ''
   for i in xrange(len(leg['contour'])):
     latlon = leg['contour'][i]
-    print scs, latlon
+    #print scs, latlon
     #LatLng_str = 'new google.maps.LatLng(%, %f)'+(str(leg['contour'][i][::-1]))
     list_of_LatLngs.append('new google.maps.LatLng(%f, %f)'%(latlon[1], latlon[0]))
   LatLngs = ','.join(list_of_LatLngs)
@@ -286,7 +267,7 @@ def render_contours_and_legs(groups):
   except:
     print "Problem opening wiki.json. Not surprised."
   wiki_dict = json.load( wiki_file )
-  print wiki_dict.keys()
+  #print wiki_dict.keys()
   full_js_string = ''
   for group in groups:
     full_js_string += leg_and_contour_to_js(group, wiki_dict)
@@ -405,7 +386,7 @@ def leg_and_contour_to_js(leg, wiki_dict):
   else:
     for i in xrange(len(leg['contour'])):
       latlon = leg['contour'][i]
-      print scs, latlon
+      #print scs, latlon
       #LatLng_str = 'new google.maps.LatLng(%, %f)'+(str(leg['contour'][i][::-1]))
       list_of_LatLngs.append('new google.maps.LatLng(%f, %f)'%(latlon[1], latlon[0]))
     LatLngs = ','.join(list_of_LatLngs)
@@ -460,8 +441,6 @@ def leg_and_contour_to_js(leg, wiki_dict):
   leg_js = """
     var polypath = [{0}];
     var middle_point = polypath[Math.floor(polypath.length/2)];
-    console.log(polypath.length);
-    console.log(Math.floor(polypath.length/2));
     var polyline = new google.maps.Polyline({{
       path: polypath,
       strokeColor: '{1}',
@@ -532,7 +511,7 @@ def consolidate_tunes(route, route_tunes, durations):
 
   # Loop over all each node. Add to group.
   for inode in xrange(0,num_nodes):
-    print durations[inode]
+    #print durations[inode]
     #print '#>> ', inode, 'LatLng', route[inode],
     #if route_tunes[inode]:
       #print route_tunes[inode][:4]

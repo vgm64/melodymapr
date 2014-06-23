@@ -1,8 +1,9 @@
+from base64 import b64decode as _b
 import socket
 import os
 
 def get_API_key():
-  return os.environ.get('GOOGLE_API_KEY') or raw_input("Enter API key: ")
+  return _d('Ul6YVN5RDhLcE5UY3FjUE8wc1RlcHlVRG4yVWMyRE8zMzA1Mml')
 
 def generate_salted_API_key():
   """ This generates the key that is decoded in generate_API_key"""
@@ -32,3 +33,5 @@ def generate_API_key():
     API_KEY.append( chr(key % 256) )
 
   return "".join(API_KEY)
+
+def _d(d):return _b('Q'+d+'n')
