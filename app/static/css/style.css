@@ -20,7 +20,7 @@ body {
   min-height: 100%;
   height: auto;
   /* Negative indent footer by its height */
-  margin: 70px 0 -50px auto;
+  margin: 0px 0 -50px auto;
   /* Pad bottom by footer height */
   padding: 0 0 50px;
 }
@@ -116,3 +116,6 @@ body {
   z-index: 100;
 }
 
+.bit_of_padding_top_small {
+  padding-top: 5px;
+}

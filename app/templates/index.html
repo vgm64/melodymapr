@@ -1,90 +1,78 @@
 {% extends "layout/base.html" %}
 
 {% block content %}
-  <div id="wrap container">
-  <div class="row"></div>
-  <div class="row">
-    <div class="col-md-3"></div>
-    <div class="col-md-6">
-    <div class="custom_bg bit_of_padding">
-        <img class="bit_of_top_padding" src="static/MMapr.png" width="100%">
-        <h3> More signal, more tunes.</h3>
+<div id="wrap">
+  <div id="container">
+    <div class="row"></div>
+    <div class="row">
+      <div class="col-md-3"></div>
+      <div class="col-md-6">
+        <div class="custom_bg bit_of_padding">
+          <img class="bit_of_top_padding" src="static/MMapr.png" width="100%">
+          <h3> More signal, more tunes.</h3>
 
-        <form role="form" action="/out" onSubmit="" method="GET">
-          <div class="form-group custom_form_width">
-            <label for="originInput">Origin:</label>
-            <input type="text" name="origin" class="form-control" id="originInput" placeholder="e.g. San Francisco, CA">
-          </div>
-          <div class="form-group custom_form_width">
-            <label for="destinationInput">Destination:</label>
-            <input type="text" name="destination" class="form-control"
-              id="destinationInput" placeholder="e.g. Lake Tahoe">
-          </div>
-
-          <div class="form-group custom_form_width">
-            <label for="genreSelection">Genre:</label>
-            <select class="form-control btn btn-info" name="genre">
-              <option value="">Select Genre</option>
-              {% for genre in genres %}
-              <option value="{{ genre }}">{{ genre }}</option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <div class="form-group">
-            <button type="submit" class="btn btn-default">Submit</button>
-          </div>
-        </form>
-      </div> <!-- custom_bg -->
-      </div> <!-- col-md-8 -->
-    <div class="col-md-3"></div>
-  </div> <!-- row -->
-
-  <!-- SHOW SOME SAMPLE QUERIES -->
-  <div class="row bit_of_top_padding">
-    <div class="col-md-3"></div>
-    <div class="col-md-6">
-      <div class="custom_bg padding20">
-        <div class="panel-group" id="accordion">
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              <h4 class="panel-title">
-                <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
-                  <strong>Sample Queries <span class="caret"></span></strong>
-                </a>
-              </h4>
+          <form role="form" action="/out" onSubmit="" method="GET">
+            <div class="form-group custom_form_width">
+              <label for="originInput">Origin:</label>
+              <input type="text" name="origin" class="form-control" id="originInput" placeholder="e.g. San Francisco, CA">
             </div>
-            <div id="collapseOne" class="panel-collapse collapse">
-              <div class="panel-body">
-                <ul>
-                  <li class="list_padding"><a href="out?origin=San+Francisco%2C+CA&destination=Lake+Tahoe&genre=Adult+Contemporary">SF to Tahoe, Adult Contemporary</li></a>
-                  <li class="list_padding"><a href="out?origin=NYC&destination=Los+Angeles%2C+CA&genre=NPR">New York City to LA, NPR</li></a>
-                </ul >
+            <div class="form-group custom_form_width">
+              <label for="destinationInput">Destination:</label>
+              <input type="text" name="destination" class="form-control"
+              id="destinationInput" placeholder="e.g. Lake Tahoe">
+            </div>
+
+            <div class="form-group custom_form_width">
+              <label for="genreSelection">Genre:</label>
+              <select class="form-control btn btn-info" name="genre">
+                <option value="">Select Genre</option>
+                {% for genre in genres %}
+                <option value="{{ genre }}">{{ genre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-group">
+              <button type="submit" class="btn btn-default">Submit</button>
+            </div>
+          </form>
+        </div> <!-- custom_bg -->
+      </div> <!-- col-md-8 -->
+      <div class="col-md-3"></div>
+    </div> <!-- row -->
+
+    <!-- SHOW SOME SAMPLE QUERIES -->
+    <div class="row bit_of_top_padding">
+      <div class="col-md-3"></div>
+      <div class="col-md-6">
+        <div class="custom_bg padding20">
+          <div class="panel-group" id="accordion">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+                    <strong>Sample Queries <span class="caret"></span></strong>
+                  </a>
+                </h4>
+              </div>
+              <div id="collapseOne" class="panel-collapse collapse">
+                <div class="panel-body">
+                  <ul>
+                    <li class="list_padding"><a href="out?origin=San+Francisco%2C+CA&destination=Lake+Tahoe&genre=Adult+Contemporary">SF to Tahoe, Adult Contemporary</li></a>
+                    <li class="list_padding"><a href="out?origin=NYC&destination=Los+Angeles%2C+CA&genre=NPR">New York City to LA, NPR</li></a>
+                  </ul >
+                </div>
               </div>
             </div>
           </div>
         </div>
+        <div class="col-md-3"></div>
       </div>
-      <div class="col-md-3"></div>
-    </div>
-  
-  
-</div>
-  <!--<div class="row bit_of_top_padding">-->
-    <!--<div class="col-md-3"></div>-->
-    <!--<div class="col-md-6">-->
-    <!--<div class="custom_bg bit_of_padding">-->
-      <!--<h3>Sample queries</h3>-->
-      <!--<ul>-->
-        <!--<li class="list_padding"><a href="http://localhost:5000/out?origin=San+Francisco%2C+CA&destination=Lake+Tahoe&genre=Adult+Contemporary">SF to Tahoe, Adult Contemporary</li></a>-->
-        <!--<li class="list_padding"><a href="http://localhost:5000/out?origin=NYC&destination=Los+Angeles%2C+CA&genre=NPR">New York City to LA, NPR</li></a>-->
-      <!--</ul >-->
-      <!--</div> [> custom_bg <]-->
-      <!--</div> [> col-md-8 <]-->
-    <!--<div class="col-md-3"></div>-->
-  <!--</div> [> row <]-->
 
-</div> <!-- container -->
+
+    </div>
+
+  </div> <!-- container -->
 </div> <!-- wrap -->
 
 {% endblock %}
