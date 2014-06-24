@@ -1,4 +1,4 @@
-from flask import render_template, request
+from flask import render_template, request, redirect, url_for
 from app import app, host, port, user, passwd, db
 from app.helpers.database import con_db, query_db, find_radio_stations
 from app.helpers.graphics import render_webfigure
@@ -25,8 +25,12 @@ def index():
   cur.execute(query)
   results = cur.fetchall()
   genres, counts = zip(*results)
+
+  # Look to see if we failed the previous query
+  failed = request.args.get("failed")
+
   # Renders index.html.
-  return render_template('index.html', genres=genres)
+  return render_template('index.html', genres=genres, failed=failed)
 
 @app.route('/out')
 def out():
@@ -38,8 +42,19 @@ def out():
   var_dict = {
     "origin": request.args.get("origin"),
     "destination": request.args.get("destination"),
-    "genre": request.args.get("genre", 'No Genre'),
+    "genre": request.args.get("genre", ''),
+    "subgenre": request.args.get("subgenre", ''),
+    "failed": request.args.get("failed")
   }
+  # Fail gracefully
+  if not var_dict['origin'] or not var_dict['destination']:
+    cur = con.cursor()
+    query = """ SELECT cat, COUNT(cat) FROM fmlist WHERE cat != 'SILENT' GROUP BY cat HAVING COUNT(cat) > 100 ORDER BY cat """
+    cur.execute(query)
+    results = cur.fetchall()
+    genres, counts = zip(*results)
+    return render_template('index.html', failed=True, genres=genres)
+  
   # Get google directions.
   directions = get_directions(var_dict['origin'], var_dict['destination'])
   timer('Finished directions JSON call')
@@ -82,6 +97,8 @@ def out():
   # Close db connection.
   con.close()
 
+  print var_dict.keys()
+  print var_dict['genre']
   # Render the template w/ user input, query result, and figure included!
   return render_template('output.html', settings=var_dict)
 

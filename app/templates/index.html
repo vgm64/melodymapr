@@ -3,7 +3,15 @@
 {% block content %}
 <div id="wrap">
   <div id="container">
-    <div class="row"></div>
+    <div class="row">
+    <div class="col-md-3"></div>
+    <div class="col-md-6">
+    {% if failed %}
+    <p class="btn btn-block bg-danger rounded_corners">You forgot something...</p>
+    {% endif %}
+    </div>
+    <div class="col-md-3"></div>
+    </div>
     <div class="row">
       <div class="col-md-3"></div>
       <div class="col-md-6">
@@ -22,10 +30,20 @@
               id="destinationInput" placeholder="e.g. Lake Tahoe">
             </div>
 
-            <div class="form-group custom_form_width">
+            <div class="form-group custom_form_width" id="genre_form">
               <label for="genreSelection">Genre:</label>
               <select class="form-control btn btn-info" name="genre">
                 <option value="">Select Genre</option>
+                {% for genre in genres %}
+                <option value="{{ genre }}">{{ genre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-group custom_form_width" id="subgenre_form">
+              <label for="genreSubSelection">If no genre station available, would you like to fill it in with something else?</label>
+              <select class="form-control btn btn-info" name="subgenre">
+                <option value="">Anything is fine, thank you.</option>
                 {% for genre in genres %}
                 <option value="{{ genre }}">{{ genre }}</option>
                 {% endfor %}
@@ -74,5 +92,24 @@
 
   </div> <!-- container -->
 </div> <!-- wrap -->
+
+<script>
+$(document).ready(function(){
+    $("div[id='subgenre_form']").hide();
+    $("select[name='genre']").change(function() {
+      console.log($( "select[name='genre'] option:selected" ).text() );
+      $("div[id='subgenre_form']").show();
+      var selected_genre = $( "select[name='genre'] option:selected").text();
+      var subgenre_str = "If "+selected_genre + " is not available, would you like to fill it in with something else?";
+      $("label[for='genreSubSelection']").text(subgenre_str);
+      });
+//If no genre station available, would you like to fill it in with something else?
+//    $(".form-control[name='genre']").click( function() {
+//      alert("WHAT");
+ //     });
+    //$("#genre_form").click(alert("WHAT"));
+});
+
+</script>
 
 {% endblock %}

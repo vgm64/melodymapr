@@ -15,6 +15,9 @@
         <dt>Origin:</dt> <dd>{{ settings['origin'] }} </dd>
         <dt>Destination: </dt><dd>{{ settings['destination'] }} </dd>
         <dt>Genre: </dt><dd>{{ settings['genre'] }} </dd>
+        {% if settings['subgenre'] %}
+        <dt>Subgenre: </dt><dd>{{ settings['subgenre'] }} </dd>
+        {% endif %}
       </dl>
     </div> <!-- custom_bg -->
 

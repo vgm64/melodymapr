@@ -51,11 +51,12 @@ def get_route_from_directions(directions):
   distance2 = route_data[:-1]
   lon1, lat1 = zip(*distance1)
   lon2, lat2 = zip(*distance2)
-  geodesics = haversine_dist(lon1, lat1, lon2, lat2) # Results in km. Converted below.
+  geodesics = haversine_dist(lon1, lat1, lon2, lat2) # Results in miles. Converted below.
   #print zip(distance1, distance2, geodesics)[:3]
   #print sum(geodesics)
   geodesics = np.r_[0, geodesics]
-  duration = np.cumsum(geodesics)*total_duration/(total_distance/1000.)
+  meters_per_mile = 1609.34
+  duration = np.cumsum(geodesics)*total_duration/(total_distance/meters_per_mile)
   #print 'BLAST:', total_duration, total_distance, duration[-1]
   #print '######', duration
 
@@ -68,6 +69,7 @@ def get_route_from_directions(directions):
       return '%.1f hours' % (duration/60./60.)
     else:
       return '%.1f days' % (duration/60./60./24.)
+  print "\n".join([str(i) for i in zip(route_data, duration) ])
   duration = map(seconds_to_time, duration)
 
   # Get the time between each of the "steps" in the driving path. Unfortunately,
@@ -84,7 +86,8 @@ def get_route_from_directions(directions):
   resampled_route_data = route_data[::(len(route_data) // desired_num_nodes)]
   resampled_duration = duration[::(len(route_data) // desired_num_nodes)]
   print '--> Down sampled from', len(route_data), 'to', len(resampled_route_data), 'nodes'
-  #print '--> Down sampled from', len(duration), 'to', len(resampled_duration), 'nodes'
+  print '--> Down sampled from', len(duration), 'to', len(resampled_duration), 'durations'
+  #print zip(route_data, duration)
   return resampled_route_data, resampled_duration
 
 

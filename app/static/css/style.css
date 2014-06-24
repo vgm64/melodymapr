@@ -62,6 +62,11 @@ body {
   /*opacity: 0.5;*/
 }
 
+.rounded_corners {
+  border-radius:20px;
+  margin-bottom:20px;
+}
+
 .bit_of_top_padding {
   padding-top: 30px;
 }

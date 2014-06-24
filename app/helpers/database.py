@@ -17,12 +17,13 @@ def con_db(host, port, user, passwd, db):
 
 # Make a query based on a given lon/lat
 
-def query_db(con, lon, lat, genre):
+def query_db(con, lon, lat, genre, subgenre):
   data_array = []
 
   # Query database
   cur = con.cursor()
-  query = get_haversine_query(lon, lat, genre=genre)
+  query = get_haversine_query(lon, lat, genre=genre, subgenre=subgenre)
+  print query
   cur.execute(query)
 
   route_results = []
@@ -46,7 +47,7 @@ def query_db(con, lon, lat, genre):
   #con.close()
   return antlons, antlats, scss, cats, separations, geodesics, contour_lons, contour_lats, frequencies
 
-def get_haversine_query(lon, lat, genre=None):
+def get_haversine_query(lon, lat, genre=None, subgenre=None):
   """
   r is in units of miles. Maybe not needed?
   """
@@ -87,13 +88,23 @@ def get_haversine_query(lon, lat, genre=None):
   AND {0} > b.minlon
   AND {0} < b.maxlon
   """
-  # If there's a genre query, put that down as well.
   query = base_query.format(lon, lat)
+  # If there's a genre query, put that down as well.
+  where_statement = None
+  if genre and not subgenre:
+    where_statement = ' AND cat = "'+genre + '" '
+  elif genre and subgenre:
+    where_statement = ' AND (cat = "{0}" OR cat = "{1}") '.format(genre, subgenre)
   if genre:
-    query += 'AND cat = "'+genre + '" '
+    query += where_statement
 
-  # Limit!
-  #query += 'ORDER BY geod LIMIT 1'
+  # Order by the size of the contour to try to minimize short legs.
+  if genre and not subgenre:
+    query += 'ORDER BY b.size DESC'
+  elif genre and subgenre:
+    query += "ORDER BY CASE WHEN cat = '{0}' then 1 else 2 end, b.size DESC".format(genre)
+  else:
+    query += 'ORDER BY b.size DESC'
 
   #print query
   return query
@@ -108,7 +119,8 @@ def find_radio_stations(con, route, var_dict):
   for node in route:
     #print "Considering node:", i, 'of', len(route)
     i+= 1
-    result = query_db(con, node[0], node[1], var_dict['genre'])
+    result = query_db(
+        con, node[0], node[1], var_dict['genre'], var_dict['subgenre'])
     # No radio towers exist near this node (based on the rectangular contour
     # approximation:
     if not result: 
