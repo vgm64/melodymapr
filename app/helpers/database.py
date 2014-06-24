@@ -23,7 +23,7 @@ def query_db(con, lon, lat, genre, subgenre):
   # Query database
   cur = con.cursor()
   query = get_haversine_query(lon, lat, genre=genre, subgenre=subgenre)
-  print query
+  #print query
   cur.execute(query)
 
   route_results = []

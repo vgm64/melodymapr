@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, send_from_directory
 from app import app, host, port, user, passwd, db
 from app.helpers.database import con_db, query_db, find_radio_stations
 from app.helpers.graphics import render_webfigure
@@ -58,8 +58,6 @@ def out():
   # Get google directions.
   directions = get_directions(var_dict['origin'], var_dict['destination'])
   timer('Finished directions JSON call')
-  #import json
-  #print json.dumps(directions)
   bbox = get_bounding_box(directions)
   var_dict['bbox'] = bbox
 
@@ -97,8 +95,8 @@ def out():
   # Close db connection.
   con.close()
 
-  print var_dict.keys()
-  print var_dict['genre']
+  #print var_dict.keys()
+  #print var_dict['genre']
   # Render the template w/ user input, query result, and figure included!
   return render_template('output.html', settings=var_dict)
 
@@ -147,7 +145,7 @@ def show_contour():
   contour_lats = [np.fromstring(i, sep=',') for i in results[5]]  
   contours = zip(contour_lons, contour_lats)
 
-  print contours[0]
+  #print contours[0]
   
   var_dict['scss'] = scss
   var_dict['contours'] = contours
@@ -229,3 +227,8 @@ def page_not_found(error):
 @app.errorhandler(500)
 def internal_error(error):
     return render_template('500.html'), 500
+ 
+@app.route('/robots.txt')
+@app.route('/sitemap.xml')
+def static_from_root():
+      return send_from_directory(app.static_folder, request.path[1:])

@@ -52,13 +52,9 @@ def get_route_from_directions(directions):
   lon1, lat1 = zip(*distance1)
   lon2, lat2 = zip(*distance2)
   geodesics = haversine_dist(lon1, lat1, lon2, lat2) # Results in miles. Converted below.
-  #print zip(distance1, distance2, geodesics)[:3]
-  #print sum(geodesics)
   geodesics = np.r_[0, geodesics]
   meters_per_mile = 1609.34
   duration = np.cumsum(geodesics)*total_duration/(total_distance/meters_per_mile)
-  #print 'BLAST:', total_duration, total_distance, duration[-1]
-  #print '######', duration
 
   def seconds_to_time(duration):
     if duration < 60:
@@ -69,7 +65,6 @@ def get_route_from_directions(directions):
       return '%.1f hours' % (duration/60./60.)
     else:
       return '%.1f days' % (duration/60./60./24.)
-  print "\n".join([str(i) for i in zip(route_data, duration) ])
   duration = map(seconds_to_time, duration)
 
   # Get the time between each of the "steps" in the driving path. Unfortunately,
