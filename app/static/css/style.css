@@ -8,7 +8,7 @@ body {
   background-color: #F0F0F0;
   /* https://flic.kr/p/5EhvHF */
   background-image:url('/static/bg.jpg');
-  background-size:100%;
+  background-size:cover;
   font-family: "Ubuntu", Tahoma, "Helvetica Neue", Helvetica, Arial, sans-serif;
   padding-top: 40px;
   overflow-y: auto;
