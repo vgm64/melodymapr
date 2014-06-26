@@ -1,6 +1,10 @@
 {% extends "layout/base.html" %}
 
 {% block content %}
+<img id="loading" src="http://cds.s8y8y8q9.hwcdn.net/images/loading.gif" width="300px"/>
+<script>
+  $("#loading").hide();
+</script>
 <div id="wrap">
   <div id="container">
     <div class="row">
@@ -17,9 +21,16 @@
       <div class="col-md-6">
         <div class="custom_bg bit_of_padding">
           <img class="bit_of_top_padding" src="static/MMapr.png" width="100%">
-          <h3> More signal, more tunes.</h3>
+          <h3>Your road trip radio companion.</h3>
+          <script>
+          function show_loading() {
+            $("#loading").toggle(400);
+          }
+          </script>
 
-          <form role="form" action="/out" onSubmit="" method="GET">
+          <!--<div class='btn' onclick='show_loading()'>Click me!</div>-->
+          <form role="form" action="/out" onsubmit='show_loading()' method="GET">
+          <!--<form role="form" action="/out" onSubmit="function () {$('p').hide();}()" method="GET">-->
             <div class="form-group custom_form_width">
               <label for="originInput">Origin:</label>
               <input type="text" name="origin" class="form-control" id="originInput" placeholder="e.g. San Francisco, CA">
@@ -78,6 +89,7 @@
                   <ul>
                     <li class="list_padding"><a href="out?origin=San+Francisco%2C+CA&destination=Lake+Tahoe&genre=Adult+Contemporary">SF to Tahoe, Adult Contemporary</li></a>
                     <li class="list_padding"><a href="out?origin=NYC&destination=Los+Angeles%2C+CA&genre=NPR">New York City to LA, NPR</li></a>
+                    <li class="list_padding"><a href="out?origin=San+Francisco%2C+CA&destination=Washington+DC&genre=Country&subgenre=Classic+Rock">San Francisco to DC, Country/Classic Rock</li></a>
                   </ul >
                 </div>
               </div>
