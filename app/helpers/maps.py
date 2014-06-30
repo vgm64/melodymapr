@@ -45,7 +45,7 @@ def get_route_from_directions(directions):
     desired_num_nodes = 300
   else:
     desired_num_nodes = 500
-  desired_num_nodes = 50
+  #desired_num_nodes = 50
 
   distance1 = route_data[1:]
   distance2 = route_data[:-1]
