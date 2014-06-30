@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}?v=3">
 
     <title>MelodyMapr - Your road trip radio companion.</title>
 
@@ -24,6 +24,7 @@
 
     <!-- Your custom styles -->
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/mask.css') }}" rel="stylesheet">
 
     <!-- Jquery -->
     <script src="{{ url_for('static', filename='vendor/jquery/dist/jquery.min.js') }}"></script>
@@ -54,6 +55,7 @@
         <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li><a href="slides">Slides</a></li>
+            <li><a href="visuals">Visuals</a></li>
             <li><a href="author">Author</a></li>
           </ul>
         </div><!--/.nav-collapse -->
