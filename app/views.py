@@ -192,6 +192,7 @@ def show_contour():
     return js
 
   def get_wiki_table(page):
+    return page
     import urllib2
     from bs4 import BeautifulSoup
     url = 'http://en.wikipedia.org/wiki/'+page
