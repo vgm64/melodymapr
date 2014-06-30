@@ -174,18 +174,13 @@ def show_contour():
       fillOpacity: 0.15
     }});
     shape.setMap(map);
-    var marker = new google.maps.Marker({{
-        position: paths[0],
-        map: map,
-        title: '{1}'
-    }});
     var infoWindow = new google.maps.InfoWindow();
-    google.maps.event.addListener(marker, 'click', (function(marker) {{
+    google.maps.event.addListener(shape, 'click', (function(shape) {{
       return function() {{
         infoWindow.setContent('{2}');
-        infoWindow.open(map, marker);
+        infoWindow.open(map, shape);
       }}
-    }})(marker));
+    }})(shape));
     
     """.format( LatLngs, scs, get_wiki_table(scs))
     return js
