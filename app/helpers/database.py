@@ -18,11 +18,11 @@ def con_db(host, port, user, passwd, db):
 
 # Make a query based on a given lon/lat
 
-def query_db(con, lon, lat, genre, subgenre):
+def query_db(cur, lon, lat, genre, subgenre):
   data_array = []
 
   # Query database
-  cur = con.cursor()
+  #cur = con.cursor()
   query = get_haversine_query(lon, lat, genre=genre, subgenre=subgenre)
   #print query
   cur.execute(query)
@@ -44,7 +44,7 @@ def query_db(con, lon, lat, genre, subgenre):
   contour_lats = [np.fromstring(i, sep=',') for i in results[9]]
   frequencies = np.array(results[10], dtype=float)
 
-  cur.close()
+  #cur.close()
   #con.close()
   return antlons, antlats, scss, cats, separations, geodesics, contour_lons, contour_lats, frequencies
 
@@ -83,7 +83,7 @@ def get_haversine_query(lon, lat, genre=None, subgenre=None):
   FROM contours b
   JOIN contour_cat_map map
   ON b.id = map.contour_id
-  WHERE 
+  AND   
       {1} > b.minlat
   AND {1} < b.maxlat
   AND {0} > b.minlon
@@ -115,13 +115,14 @@ def find_radio_stations(con, route, var_dict):
   This will loop over each point in the route (node) and determine the radio
   stations (if any) that it can receive.
   """
+  cur = con.cursor()
   antennas_for_each_node = []
   i = -1
   for node in route:
     #print "Considering node:", i, 'of', len(route)
     i+= 1
     result = query_db(
-        con, node[0], node[1], var_dict['genre'], var_dict['subgenre'])
+        cur, node[0], node[1], var_dict['genre'], var_dict['subgenre'])
     # No radio towers exist near this node (based on the rectangular contour
     # approximation:
     if not result: 
