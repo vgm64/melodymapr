@@ -40,12 +40,12 @@ def get_route_from_directions(directions):
   total_distance = directions['routes'][0]['legs'][0]['distance']['value'] # Meters
   total_duration = directions['routes'][0]['legs'][0]['duration']['value'] # Seconds
   if total_distance < 400000: # 400 km
-    desired_num_nodes = 100
+    desired_num_nodes = 200
   elif total_distance < 4000000: # 4000 km
-    desired_num_nodes = 300
+    desired_num_nodes = 200
   else:
-    desired_num_nodes = 500
-  #desired_num_nodes = 50
+    desired_num_nodes = 200
+  #desired_num_nodes = 100
 
   distance1 = route_data[1:]
   distance2 = route_data[:-1]
