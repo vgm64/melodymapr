@@ -8,7 +8,6 @@ from app.helpers.maps import render_contours, assign_colors, render_contours_and
 from app.helpers.misc import Timer
 import matplotlib.pyplot as plt
 
-
 # To create a database connection, add the following
 # within your view functions:
 # con = con_db(host, port, user, passwd, db)
