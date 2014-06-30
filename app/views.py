@@ -178,7 +178,7 @@ def show_contour():
     google.maps.event.addListener(shape, 'click', (function(shape) {{
       return function() {{
         infoWindow.setContent('{2}');
-        infoWindow.open(map, paths[0]);
+        infoWindow.open(map, shape.paths[0]);
       }}
     }})(shape));
     
