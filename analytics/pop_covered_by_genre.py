@@ -6,6 +6,8 @@ from matplotlib.path import Path
 import pymysql
 import pandas as pd
 import cPickle as pickle
+import time
+from numba import jit, autojit
 execfile("/Users/mwoods/Work/OldJobs/JobSearch/Pre-Insight/plotUSA.py")
 
 def get_contours(where = ""):
@@ -74,6 +76,7 @@ def read_pop_file():
   data['lon'] = data['Location 1'].map(lambda x: eval(x)[1])
   return data
 
+@autojit
 def smear_pop(xs, ys, binx, biny, popsdf):
   # xs, ys:   grid over which to smear the county populations
   # They are ravelled!
@@ -94,17 +97,33 @@ def smear_pop(xs, ys, binx, biny, popsdf):
     #print bin_populations.shape
     #bin_populations += pop * counties_contained
 
-  binx = xs[1] - xs[0]
-  biny = ys[1] - ys[0]
   lower_x = xs - binx/2.
   lower_y = ys - biny/2.
   upper_x = xs + binx/2.
   upper_y = ys + biny/2.
   bin_populations = zeros_like(xs)
-  for i in xrange(len(xs)):
-    for lon, lat, pop in zip(lons, lats, pops):
+  lower_x = list(lower_x)
+  lower_y = list(lower_y)
+  upper_x = list(upper_x)
+  upper_y = list(upper_y)
+  final_shape = len(bin_populations)
+  lats = list(lats)
+  lons = list(lons)
+  pops = list(pops)
+  return numba_smear(final_shape, lower_x, lower_y, upper_x, upper_y, len(lats), lats, lons, pops)
+
+@autojit
+def numba_smear(final_shape, lower_x, lower_y, upper_x, upper_y, num_counties, lats, lons, pops):
+
+  bin_populations = zeros(final_shape)
+  for i in xrange(final_shape):
+    for j in xrange(num_counties):
+      lon = lons[j]
+      lat = lats[j]
+      pop = pops[j]
+    #for lon, lat, pop in zip(lons, lats, pops):
       if lon < upper_x[i] and lon > lower_x[i] and lat < upper_y[i] and lat > lower_y[i]:
-        print lon, upper_x[i]
+        #print lon, upper_x[i]
         bin_populations[i] += pop
   return bin_populations
 
@@ -157,4 +176,13 @@ if __name__ == '__main__':
   pops = read_pop_file()
   binx = x[1] - x[0]
   biny = y[1] - y[0]
-  smear_pop(xs, ys, binx, biny, pops)
+  start = time.time()
+  smear = smear_pop(xs, ys, binx, biny, pops)
+  print 'Smear took', time.time() - start, 'seconds'
+
+  # Bounds for results webpage:
+  #In [442]: xlim(-130, -66)
+  #Out[442]: (-130, -66)
+  #In [443]: ylim(20, 54)
+  #Out[443]: (20, 54)
+  # Colormap is gca().collections[-1].set_cmap(cm.gist_heat)
