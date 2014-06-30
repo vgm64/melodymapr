@@ -124,3 +124,12 @@ body {
 .bit_of_padding_top_small {
   padding-top: 5px;
 }
+
+.pie_bg {
+  /*background-color: #F0F0F0;*/
+  background-color: rgba(240, 240, 240, 0.5);
+  border-radius:20px;
+  margin:100px;
+  padding:50px 0 50px;
+  /*opacity: 0.5;*/
+}

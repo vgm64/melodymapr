@@ -3,6 +3,9 @@ ion()
 f,ax = subplots(figsize=(10,10))
 ax.set_aspect("equal")
 
+rcParams['font.size'] = 15
+rcParams['font.weight'] = 'bold'
+
 data = [
 "Religious", 2803,
 "Adult Contemporary",  1753,
@@ -51,7 +54,7 @@ colors = colors.reshape(5, 3)
   #colors.append( (1-i*.1, 1-i*.1, )) 
 #for i in range(N)[::-1]:
   #colors.append( (1./N * i, .2, .2)) 
-pie(fracs, labels=labels, autopct='%1.1f%%', startangle=90, colors=colors)
+pie(fracs, labels=labels, autopct='%1.1f%%', startangle=90, colors=colors, pctdistance=.8)
 #pie(fracs, labels=labels, autopct='%1.1f%%', startangle=90)
 subplots_adjust(left=0,  right=1)
 xlim(-2, 2)
@@ -62,3 +65,4 @@ html = mpld3.fig_to_html(f)
 open("/tmp/d3.html", "w").write(html)
 import os
 os.system("cat /tmp/d3.html | pbcopy")
+savefig("pie.png", transparent=True)
