@@ -13,6 +13,15 @@ import matplotlib.pyplot as plt
 # within your view functions:
 # con = con_db(host, port, user, passwd, db)
 
+@app.route("/clip")
+def clip():
+  import os
+  return open("app/static/js/test/test.html").read()
+
+@app.route("/visuals")
+def visuals():
+  return render_template("results.html")
+
 
 # ROUTING/VIEW FUNCTIONS
 @app.route('/')
