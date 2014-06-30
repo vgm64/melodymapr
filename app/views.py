@@ -174,11 +174,11 @@ def show_contour():
       fillOpacity: 0.15
     }});
     shape.setMap(map);
-    var infoWindow = new google.maps.InfoWindow();
+    var infoWindow = new google.maps.InfoWindow({{paths: paths}});
     google.maps.event.addListener(shape, 'click', (function(shape) {{
       return function() {{
         infoWindow.setContent('{2}');
-        infoWindow.setPosition( shape.paths[0] );
+        infoWindow.setPosition( this.paths[0] );
         infoWindow.open(map);
       }}
     }})(shape));
