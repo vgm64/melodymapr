@@ -87,9 +87,9 @@
               <div id="collapseOne" class="panel-collapse collapse">
                 <div class="panel-body">
                   <ul>
-                    <li class="list_padding"><a href="out?origin=San+Francisco%2C+CA&destination=Lake+Tahoe&genre=Adult+Contemporary" onclick='show_loading()'>SF to Tahoe, Adult Contemporary</li></a>
-                    <li class="list_padding"><a href="out?origin=NYC&destination=Los+Angeles%2C+CA&genre=NPR" onclick='show_loading()'>New York City to LA, NPR</li></a>
-                    <li class="list_padding"><a href="out?origin=San+Francisco%2C+CA&destination=Washington+DC&genre=Country&subgenre=Classic+Rock" onclick='show_loading()'>San Francisco to DC, Country/Classic Rock</li></a>
+                    <li class="list_padding"><a style="cursor:pointer" onclick='place_input("San Francisco", "Austin", "Adult Contemporary")'>SF to Austin, Adult Contemporary</a>
+                    <li class="list_padding"><a style="cursor:pointer" onclick='place_input("Davis, CA", "Lake Tahoe", "Alternative", "Rock")'>Davis to Lake Tahoe, Alternative and Rock</a>
+                    <li class="list_padding"><a style="cursor:pointer" onclick='place_input("Stockton", "Los Angeles", "Country")'>Los Angeles to Las Vegas, Country</a>
                   </ul >
                 </div>
               </div>
@@ -122,6 +122,17 @@ $(document).ready(function(){
     //$("#genre_form").click(alert("WHAT"));
 });
 
+</script>
+
+<!-- Put sample queries into the text boxes -->
+<script>
+function place_input(given_origin, given_dest, genre, subgenre) {
+$("#originInput").val(given_origin);
+$("#destinationInput").val(given_dest);
+$("select[name='genre']").val(genre);
+$("select[name='subgenre']").val(subgenre);
+$("div[id='subgenre_form']").show();
+}
 </script>
 
 {% endblock %}
