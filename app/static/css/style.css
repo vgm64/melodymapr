@@ -114,10 +114,10 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 300px;
-  height: 300px;
+  width: 364px;
+  height: 572px;
   /* 1/2 of the height and width of the actual gif */
-  margin: -150px 0 0 -150px;
+  margin: -286px 0 0 -182px;
   z-index: 100;
 }
 
@@ -132,4 +132,20 @@ body {
   margin:100px;
   padding:50px 0 50px;
   /*opacity: 0.5;*/
+}
+
+.darkClass
+{
+  background-color: white;
+  filter:alpha(opacity=50); /* IE */
+  opacity: 0.5; /* Safari, Opera */
+  -moz-opacity:0.50; /* FireFox */
+  z-index: 20;
+  height: 100%;
+  width: 100%;
+  background-repeat:no-repeat;
+  background-position:center;
+  position:relative;
+  top: 0px;
+  left: 0px;
 }

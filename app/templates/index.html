@@ -1,7 +1,9 @@
 {% extends "layout/base.html" %}
 
 {% block content %}
-<img id="loading" src="http://cds.s8y8y8q9.hwcdn.net/images/loading.gif" width="300px"/>
+<div id="darkLayer" class="darkClass" style="display:none"></div>
+<img id="loading" src="static/images/radio_loading.gif" width="800px"/>
+<!--<img id="loading" src="http://cds.s8y8y8q9.hwcdn.net/images/loading.gif" width="300px"/> -->
 <script>
   $("#loading").hide();
 </script>
@@ -24,6 +26,7 @@
           <h3>Your road trip radio companion.</h3>
           <script>
           function show_loading() {
+            $(".darkClass").show();
             $("#loading").toggle(400);
           }
           </script>
